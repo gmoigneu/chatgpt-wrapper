@@ -1,0 +1,28 @@
+routes:
+  "https://api.{all}/": { type: upstream, upstream: "app:http" }
+  "https://frontend.{all}/": { type: upstream, upstream: "frontend:http" }
+  "http://{all}/": { type: redirect, to: "https://frontend.{all}/" }
+
+frontend:
+  source:
+    root: "frontend"
+
+  type: nodejs:20
+
+  build:
+    flavor: none
+
+  web:
+    locations:
+      "/":
+        root: "build"
+        expires: 1h
+        passthru: "/index.html"
+    commands:
+      start: sleep infinity
+
+  hooks:
+    build: |
+      set -x -e
+      bun install
+      bun run build
