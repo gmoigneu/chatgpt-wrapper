@@ -1,4 +1,5 @@
 import axios from './axios'
+import {getApiURL} from "./axios";
 
 export const getChats = async () => {
     return axios

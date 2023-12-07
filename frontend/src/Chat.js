@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import {useAppStore} from "./lib/store";
+import {getApiURL} from "./lib/axios";
 import {getMessages} from "./lib/api";
 import {PaperAirplaneIcon, RocketLaunchIcon, UserCircleIcon} from "@heroicons/react/24/outline";
 import { toast } from 'react-toastify'
@@ -74,7 +75,7 @@ const Chat = (props) => {
         let scroller = document.getElementById('scroller')
         scroller.scrollTo(0, scroller.scrollHeight)
 
-        await fetchEventSource(`${process.env.REACT_APP_BASE_URL}/chat/${chat.id}/message`, {
+        await fetchEventSource(`${getApiURL()}/chat/${chat.id}/message`, {
             method: 'POST',
             openWhenHidden: true,
             body: JSON.stringify({
