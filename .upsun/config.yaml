@@ -1,0 +1,98 @@
+routes:
+    "https://api.{all}/": { type: upstream, upstream: "app:http" }
+    "https://frontend.{all}/": { type: upstream, upstream: "frontend:http" }
+    "http://{all}/": { type: redirect, to: "https://frontend.{all}/" }
+
+services: 
+    database:
+        type: postgresql:15
+
+
+applications:
+    frontend:
+        source:
+            root: "frontend"
+
+        type: nodejs:20
+
+        build:
+            flavor: none
+
+        web:
+            locations:
+                "/":
+                    root: "build"
+                    expires: 1h
+                    passthru: "/index.html"
+            commands:
+                start: sleep infinity
+
+        hooks:
+            build: |
+                set -x -e
+                bun install
+                bun run build
+    app:
+        source:
+            root: "/"
+
+        type: php:8.3
+
+        dependencies:
+            php:
+                composer/composer: "^2"
+
+        runtime:
+            extensions:
+                - apcu
+                - blackfire
+                - ctype
+                - iconv
+                - mbstring
+                - pdo_pgsql
+                - pdo_pgsql
+                - sodium
+                - xsl
+                
+
+        variables:
+            php:
+                opcache.preload: config/preload.php
+        build:
+            flavor: none
+
+        web:
+            locations:
+                "/":
+                    root: "public"
+                    expires: 1h
+                    passthru: "/index.php"
+
+        mounts:
+            "/var": { source: storage, source_path: var }
+            
+
+        relationships:
+            database: "database:postgresql"
+
+        hooks:
+            build: |
+                set -x -e
+
+                curl -fs https://get.symfony.com/cloud/configurator | bash
+                
+                NODE_VERSION=18 symfony-build
+
+            deploy: |
+                set -x -e
+
+                symfony-deploy
+
+        crons:
+            security-check:
+                # Check that no security issues have been found for PHP packages deployed in production
+                # See https://github.com/fabpot/local-php-security-checker
+                spec: '50 23 * * *'
+                cmd: if [ "$PLATFORM_ENVIRONMENT_TYPE" = "production" ]; then croncape php-security-checker; fi
+
+        
