@@ -34,7 +34,7 @@ applications:
                 bun run build
     app:
         source:
-            root: "/"
+            root: "backend"
 
         type: php:8.3
 
